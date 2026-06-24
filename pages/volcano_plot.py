@@ -1,77 +1,94 @@
-import streamlit as st
-import pandas as pd
 import numpy as np
+import streamlit as st
 import plotly.express as px
-import plotly.graph_objects as go
 
-st.subheader("🌋 Volcano Plot - ژن‌های دیفرنشیال")
-
-# تولید داده
-@st.cache_data
-def generate_volcano_data():
-    np.random.seed(42)
-    n_genes = 1000
-    
-    log2fc = np.random.normal(0, 1.5, n_genes)
-    pvalue = np.random.uniform(0.0001, 1, n_genes)
-    
-    # افزودن ژن‌های معنادار
-    significant_idx = np.random.choice(n_genes, 100, replace=False)
-    log2fc[significant_idx] = np.random.choice([-1, 1], 100) * np.random.uniform(2, 5, 100)
-    pvalue[significant_idx] = np.random.uniform(0.00001, 0.01, 100)
-    
-    df = pd.DataFrame({
-        'Gene': [f'AT{i}G{str(j).zfill(5)}' for i, j in 
-                 zip(np.random.randint(1, 6, n_genes), np.random.randint(10000, 99999, n_genes))],
-        'log2FoldChange': log2fc,
-        'pvalue': pvalue,
-        '-log10(pvalue)': -np.log10(pvalue)
-    })
-    return df
-
-df = generate_volcano_data()
-
-# تنظیمات
-col1, col2 = st.columns(2)
-with col1:
-    fc_threshold = st.slider("آستانه Fold Change:", 0.5, 3.0, 1.5, 0.1)
-with col2:
-    pval_threshold = st.slider("آستانه P-value:", 0.001, 0.1, 0.05, 0.001)
-
-# تعیین وضعیت ژن‌ها
-def classify_gene(row):
-    if row['pvalue'] < pval_threshold:
-        if row['log2FoldChange'] > fc_threshold:
-            return 'Up-regulated'
-        elif row['log2FoldChange'] < -fc_threshold:
-            return 'Down-regulated'
-    return 'Not Significant'
-
-df['Status'] = df.apply(classify_gene, axis=1)
-
-# رسم نمودار
-colors = {'Up-regulated': '#ef4444', 'Down-regulated': '#3b82f6', 'Not Significant': '#6b7280'}
-
-fig = px.scatter(
-    df,
-    x='log2FoldChange',
-    y='-log10(pvalue)',
-    color='Status',
-    color_discrete_map=colors,
-    hover_data=['Gene'],
-    title='Volcano Plot - Differential Gene Expression'
+from utils import (
+    load_data_widget,
+    show_dataframe_overview,
+    numeric_columns,
+    download_plotly_html,
+    download_dataframe,
+    add_common_layout_options
 )
 
-# افزودن خطوط آستانه
-fig.add_hline(y=-np.log10(pval_threshold), line_dash="dash", line_color="gray")
-fig.add_vline(x=fc_threshold, line_dash="dash", line_color="gray")
-fig.add_vline(x=-fc_threshold, line_dash="dash", line_color="gray")
+st.set_page_config(page_title="Volcano Plot", layout="wide")
 
-fig.update_layout(height=600)
+st.title("Volcano plot")
+st.write("Upload differential expression results with gene ID, log2 fold change, and p-value or adjusted p-value.")
+
+df = load_data_widget("volcano", "Upload volcano plot data")
+
+if df is None:
+    st.stop()
+
+show_dataframe_overview(df)
+
+num_cols = numeric_columns(df)
+if len(num_cols) < 2:
+    st.error("Volcano plot requires at least two numeric columns: log2FC and p-value.")
+    st.stop()
+
+c1, c2, c3 = st.columns(3)
+with c1:
+    gene_col = st.selectbox("Gene ID column", df.columns.tolist())
+with c2:
+    fc_col = st.selectbox("log2 fold-change column", num_cols)
+with c3:
+    p_col = st.selectbox("p-value or adjusted p-value column", num_cols)
+
+df_plot = df.copy()
+df_plot[fc_col] = np.asarray(df_plot[fc_col], dtype=float)
+df_plot[p_col] = np.asarray(df_plot[p_col], dtype=float)
+df_plot = df_plot.replace([np.inf, -np.inf], np.nan).dropna(subset=[fc_col, p_col])
+df_plot = df_plot[df_plot[p_col] > 0]
+
+c1, c2, c3 = st.columns(3)
+with c1:
+    fc_threshold = st.slider("Absolute log2FC threshold", 0.0, 5.0, 1.0, 0.1)
+with c2:
+    p_threshold = st.number_input("P-value threshold", min_value=0.000001, max_value=1.0, value=0.05, format="%.6f")
+with c3:
+    label_top_n = st.slider("Label top significant genes", 0, 100, 20)
+
+df_plot["neg_log10_p"] = -np.log10(df_plot[p_col])
+
+df_plot["Status"] = "Not significant"
+df_plot.loc[(df_plot[p_col] < p_threshold) & (df_plot[fc_col] >= fc_threshold), "Status"] = "Up-regulated"
+df_plot.loc[(df_plot[p_col] < p_threshold) & (df_plot[fc_col] <= -fc_threshold), "Status"] = "Down-regulated"
+
+df_plot["Label"] = ""
+if label_top_n > 0:
+    top_idx = df_plot[df_plot["Status"] != "Not significant"].sort_values(p_col).head(label_top_n).index
+    df_plot.loc[top_idx, "Label"] = df_plot.loc[top_idx, gene_col].astype(str)
+
+colors = {
+    "Up-regulated": "#D55E00",
+    "Down-regulated": "#0072B2",
+    "Not significant": "#777777"
+}
+
+fig = px.scatter(
+    df_plot,
+    x=fc_col,
+    y="neg_log10_p",
+    color="Status",
+    color_discrete_map=colors,
+    hover_data=[gene_col, fc_col, p_col],
+    text="Label"
+)
+
+fig.add_hline(y=-np.log10(p_threshold), line_dash="dash", line_color="black")
+fig.add_vline(x=fc_threshold, line_dash="dash", line_color="black")
+fig.add_vline(x=-fc_threshold, line_dash="dash", line_color="black")
+fig.update_traces(textposition="top center")
+fig = add_common_layout_options(fig, "Volcano plot", height=700)
+
 st.plotly_chart(fig, use_container_width=True)
 
-# نمایش آمار
-col1, col2, col3 = st.columns(3)
-col1.metric("Up-regulated", len(df[df['Status'] == 'Up-regulated']))
-col2.metric("Down-regulated", len(df[df['Status'] == 'Down-regulated']))
-col3.metric("Not Significant", len(df[df['Status'] == 'Not Significant']))
+c1, c2, c3 = st.columns(3)
+c1.metric("Up-regulated", int((df_plot["Status"] == "Up-regulated").sum()))
+c2.metric("Down-regulated", int((df_plot["Status"] == "Down-regulated").sum()))
+c3.metric("Not significant", int((df_plot["Status"] == "Not significant").sum()))
+
+download_plotly_html(fig, "volcano_plot.html")
+download_dataframe(df_plot, "volcano_results_classified.csv")
