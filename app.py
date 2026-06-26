@@ -1,108 +1,110 @@
 import streamlit as st
-import pandas as pd
-import numpy as np
-import plotly.express as px
-
-from utils import (
-    load_data_widget,
-    show_dataframe_overview,
-    numeric_columns,
-    categorical_columns,
-    download_plotly_html,
-    download_dataframe,
-    add_common_layout_options
-)
 
 st.set_page_config(
-    page_title="BioData Visualization App",
-    page_icon="chart",
-    layout="wide"
+    page_title="🧬 Multi-Omics Analysis Platform",
+    page_icon="🧬",
+    layout="wide",
+    initial_sidebar_state="expanded"
 )
 
-st.title("BioData Visualization App")
-st.write(
-    "Upload your own CSV or Excel file and create customizable scientific plots. "
-    "Use the pages in the left sidebar for gene expression, PCA, volcano plot, genomics, SNP, phenomics, metabolomics, pathway, and clustering analyses."
-)
+# --- Custom CSS ---
+st.markdown("""
+<style>
+    .main-header {
+        font-size: 2.5rem;
+        font-weight: bold;
+        color: #1E88E5;
+        text-align: center;
+        margin-bottom: 0.5rem;
+    }
+    .sub-header {
+        font-size: 1.2rem;
+        color: #666;
+        text-align: center;
+        margin-bottom: 2rem;
+    }
+    .feature-card {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        padding: 1.5rem;
+        border-radius: 10px;
+        color: white;
+        margin-bottom: 1rem;
+        box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+    }
+    .analysis-badge {
+        background: #e3f2fd;
+        padding: 0.5rem 1rem;
+        border-radius: 20px;
+        margin: 0.2rem;
+        display: inline-block;
+        font-size: 0.9rem;
+    }
+</style>
+""", unsafe_allow_html=True)
 
-df = load_data_widget("main", "Upload a general data file")
+# --- Main Page ---
+st.markdown('<p class="main-header">🧬 Multi-Omics Analysis Platform</p>', unsafe_allow_html=True)
+st.markdown('<p class="sub-header">A comprehensive platform for genomics, metabolomics, phenomics, and machine learning analysis</p>', unsafe_allow_html=True)
 
-if df is not None:
-    show_dataframe_overview(df)
+st.markdown("---")
 
-    num_cols = numeric_columns(df)
-    cat_cols = categorical_columns(df)
+# --- Overview ---
+st.header("🏠 Welcome")
+st.markdown("""
+This platform provides a wide range of bioinformatics and machine learning analysis tools.  
+Use the **sidebar** to navigate between different analysis modules.
+""")
 
-    if len(num_cols) == 0:
-        st.error("Your file must contain at least one numeric column.")
-        st.stop()
+# --- Analysis Categories ---
+st.header("📂 Available Analysis Modules")
 
-    st.subheader("General plotting")
+col1, col2, col3 = st.columns(3)
 
-    chart_type = st.selectbox(
-        "Chart type",
-        ["Scatter Plot", "Line Chart", "Bar Chart", "Histogram", "Box Plot", "Correlation Heatmap"]
-    )
+with col1:
+    st.markdown("### 🧬 Omics Analysis")
+    st.markdown("""
+    - **Genomics** — Genomic data analysis
+    - **Metabolomics** — Metabolomics analysis
+    - **Phenomics** — Phenomics analysis
+    - **Gene Heatmap** — Gene expression heatmap
+    - **Metabolic Pathway** — Pathway visualization
+    - **SNP Analysis** — SNP data analysis
+    """)
 
-    color_col = st.selectbox(
-        "Color/group column",
-        ["None"] + df.columns.tolist()
-    )
+with col2:
+    st.markdown("### 📊 Dimensionality Reduction & Clustering")
+    st.markdown("""
+    - **PCA Analysis** — Principal Component Analysis
+    - **UMAP Analysis** — Uniform Manifold Approximation
+    - **Cluster Analysis** — Clustering analysis
+    - **Volcano Plot** — Differential expression visualization
+    """)
 
-    if chart_type in ["Scatter Plot", "Line Chart", "Bar Chart", "Box Plot"]:
-        c1, c2 = st.columns(2)
-        with c1:
-            x_col = st.selectbox("X-axis", df.columns.tolist())
-        with c2:
-            y_col = st.selectbox("Y-axis", num_cols)
+with col3:
+    st.markdown("### 🤖 Machine Learning")
+    st.markdown("""
+    - **Regression** — Linear, Polynomial, RF, XGBoost
+    - **Classification** — Logistic, SVM, RF, XGBoost
+    - **Feature Selection** — Forward, Backward, Lasso, Ridge
+    """)
 
-    title = st.text_input("Plot title", value=chart_type)
-    color_arg = None if color_col == "None" else color_col
+st.markdown("---")
 
-    if chart_type == "Scatter Plot":
-        fig = px.scatter(df, x=x_col, y=y_col, color=color_arg, hover_data=df.columns)
-    elif chart_type == "Line Chart":
-        fig = px.line(df, x=x_col, y=y_col, color=color_arg)
-    elif chart_type == "Bar Chart":
-        agg_method = st.selectbox("Aggregation", ["None", "Mean", "Sum", "Median"])
-        if agg_method != "None":
-            agg_fun = agg_method.lower()
-            plot_df = df.groupby(x_col, as_index=False)[y_col].agg(agg_fun)
-            fig = px.bar(plot_df, x=x_col, y=y_col, color=color_arg if color_arg in plot_df.columns else None)
-        else:
-            fig = px.bar(df, x=x_col, y=y_col, color=color_arg)
-    elif chart_type == "Histogram":
-        hist_col = st.selectbox("Numeric variable", num_cols)
-        bins = st.slider("Number of bins", 5, 100, 30)
-        fig = px.histogram(df, x=hist_col, color=color_arg, nbins=bins)
-    elif chart_type == "Box Plot":
-        fig = px.box(df, x=x_col, y=y_col, color=color_arg, points="outliers")
-    else:
-        corr_method = st.selectbox("Correlation method", ["pearson", "spearman", "kendall"])
-        corr = df[num_cols].corr(method=corr_method)
-        fig = px.imshow(
-            corr,
-            text_auto=".2f",
-            color_continuous_scale="RdBu_r",
-            aspect="auto"
-        )
+# --- Quick Start ---
+st.header("🚀 Quick Start Guide")
+st.markdown("""
+1. **Select an analysis** from the sidebar navigation
+2. **Upload your CSV data** file
+3. **Configure parameters** in the sidebar
+4. **Click Run** to execute the analysis
+5. **Download results** and visualizations
+""")
 
-    fig = add_common_layout_options(fig, title)
-    st.plotly_chart(fig, use_container_width=True)
-
-    download_plotly_html(fig, "general_plot.html")
-    download_dataframe(df, "uploaded_data.csv")
-
-else:
-    st.info("Upload a dataset to start.")
-    st.markdown(
-        """
-        Suggested formats:
-
-        - General plots: any table with numeric columns
-        - Heatmap/PCA: samples in rows and numeric variables in columns
-        - Volcano plot: gene ID, log2 fold change, p-value or adjusted p-value
-        - SNP analysis: marker columns coded as 0/1/2, plus optional sample metadata
-        - Pathway: edge list with source and target columns
-        """
-    )
+# --- Footer ---
+st.markdown("---")
+st.markdown("""
+<div style='text-align: center; color: #888; padding: 1rem;'>
+    <p>🧬 Multi-Omics Analysis Platform | Built with Streamlit</p>
+    <p>For research and educational purposes</p>
+</div>
+""", unsafe_allow_html=True)

@@ -1,131 +1,155 @@
-import io
-import numpy as np
+"""
+Utility functions for the Multi-Omics Analysis Platform.
+Shared helper functions used across multiple analysis pages.
+"""
+
 import pandas as pd
-import streamlit as st
+import numpy as np
+from sklearn.preprocessing import StandardScaler, LabelEncoder
 
 
-def load_data_widget(key: str, title: str = "Upload your data file"):
-    uploaded = st.file_uploader(
-        title,
-        type=["csv", "txt", "tsv", "xlsx", "xls"],
-        key=f"{key}_uploader"
-    )
-
-    if uploaded is None:
-        st.info("Please upload a CSV, TXT, TSV, XLSX, or XLS file.")
-        return None
-
-    name = uploaded.name.lower()
-
+def load_and_validate_csv(uploaded_file, min_rows=2, min_cols=1):
+    """
+    Load a CSV file and perform basic validation.
+    
+    Args:
+        uploaded_file: Streamlit uploaded file object
+        min_rows: Minimum number of rows required
+        min_cols: Minimum number of columns required
+    
+    Returns:
+        tuple: (DataFrame, error_message) - error_message is None if successful
+    """
     try:
-        if name.endswith((".xlsx", ".xls")):
-            xls = pd.ExcelFile(uploaded)
-            sheet = st.selectbox(
-                "Select Excel sheet",
-                xls.sheet_names,
-                key=f"{key}_sheet"
-            )
-            df = pd.read_excel(xls, sheet_name=sheet)
-        else:
-            sep_choice = st.selectbox(
-                "File separator",
-                ["Auto", "Comma (,)", "Tab", "Semicolon (;)"],
-                key=f"{key}_sep"
-            )
-
-            sep_map = {
-                "Auto": None,
-                "Comma (,)": ",",
-                "Tab": "\t",
-                "Semicolon (;)": ";"
-            }
-
-            df = pd.read_csv(
-                uploaded,
-                sep=sep_map[sep_choice],
-                engine="python"
-            )
-
-        df.columns = [str(c).strip() for c in df.columns]
-        return df
-
+        df = pd.read_csv(uploaded_file)
+        
+        if df.shape[0] < min_rows:
+            return None, f"Dataset must have at least {min_rows} rows. Found {df.shape[0]}."
+        
+        if df.shape[1] < min_cols:
+            return None, f"Dataset must have at least {min_cols} columns. Found {df.shape[1]}."
+        
+        return df, None
     except Exception as e:
-        st.error(f"Could not read the file: {e}")
-        return None
+        return None, f"Error reading CSV file: {str(e)}"
 
 
-def show_dataframe_overview(df: pd.DataFrame):
-    st.subheader("Data preview")
-    st.dataframe(df.head(20), use_container_width=True)
-
-    c1, c2, c3 = st.columns(3)
-    c1.metric("Rows", f"{df.shape[0]:,}")
-    c2.metric("Columns", f"{df.shape[1]:,}")
-    c3.metric("Missing cells", f"{int(df.isna().sum().sum()):,}")
-
-
-def numeric_columns(df: pd.DataFrame):
+def get_numeric_columns(df):
+    """
+    Get list of numeric columns from a DataFrame.
+    
+    Args:
+        df: pandas DataFrame
+    
+    Returns:
+        list: List of numeric column names
+    """
     return df.select_dtypes(include=[np.number]).columns.tolist()
 
 
-def categorical_columns(df: pd.DataFrame):
-    return df.select_dtypes(exclude=[np.number]).columns.tolist()
+def get_categorical_columns(df):
+    """
+    Get list of categorical columns from a DataFrame.
+    
+    Args:
+        df: pandas DataFrame
+    
+    Returns:
+        list: List of categorical column names
+    """
+    return df.select_dtypes(include=['object', 'category']).columns.tolist()
 
 
-def coerce_numeric(df: pd.DataFrame, cols):
-    out = df.copy()
-    for col in cols:
-        out[col] = pd.to_numeric(out[col], errors="coerce")
-    return out
+def standardize_features(X, return_scaler=False):
+    """
+    Standardize features using StandardScaler.
+    
+    Args:
+        X: numpy array or DataFrame of features
+        return_scaler: If True, return the fitted scaler
+    
+    Returns:
+        numpy array of standardized features, optionally the scaler
+    """
+    scaler = StandardScaler()
+    X_scaled = scaler.fit_transform(X)
+    
+    if return_scaler:
+        return X_scaled, scaler
+    return X_scaled
 
 
-def download_plotly_html(fig, filename: str):
-    html = fig.to_html(include_plotlyjs="cdn")
-    st.download_button(
-        "Download plot as HTML",
-        data=html,
-        file_name=filename,
-        mime="text/html"
-    )
+def encode_labels(y):
+    """
+    Encode categorical labels to numeric values.
+    
+    Args:
+        y: array-like of labels
+    
+    Returns:
+        tuple: (encoded_labels, label_encoder, class_names)
+    """
+    le = LabelEncoder()
+    y_encoded = le.fit_transform(y)
+    class_names = le.classes_.astype(str)
+    return y_encoded, le, class_names
 
 
-def download_dataframe(df: pd.DataFrame, filename: str):
-    csv = df.to_csv(index=False).encode("utf-8")
-    st.download_button(
-        "Download table as CSV",
-        data=csv,
-        file_name=filename,
-        mime="text/csv"
-    )
+def calculate_missing_stats(df):
+    """
+    Calculate missing value statistics for each column.
+    
+    Args:
+        df: pandas DataFrame
+    
+    Returns:
+        DataFrame with missing value statistics
+    """
+    missing = df.isnull().sum()
+    missing_pct = (missing / len(df) * 100).round(2)
+    
+    stats_df = pd.DataFrame({
+        'Column': df.columns,
+        'Missing Count': missing.values,
+        'Missing %': missing_pct.values,
+        'Data Type': df.dtypes.values
+    })
+    
+    return stats_df[stats_df['Missing Count'] > 0].sort_values('Missing Count', ascending=False)
 
 
-def build_numeric_matrix(df: pd.DataFrame, id_col, value_cols, missing_method="Mean"):
-    matrix = df[[id_col] + value_cols].copy() if id_col else df[value_cols].copy()
+def safe_divide(a, b, default=0.0):
+    """
+    Safely divide two numbers, returning default if division by zero.
+    
+    Args:
+        a: Numerator
+        b: Denominator
+        default: Value to return if b is zero
+    
+    Returns:
+        float: Result of division or default value
+    """
+    try:
+        if b == 0:
+            return default
+        return a / b
+    except Exception:
+        return default
 
-    if id_col:
-        matrix[id_col] = matrix[id_col].astype(str)
-        matrix = matrix.set_index(id_col)
 
-    matrix = matrix.apply(pd.to_numeric, errors="coerce")
-
-    if missing_method == "Mean":
-        matrix = matrix.apply(lambda x: x.fillna(x.mean()), axis=0)
-    elif missing_method == "Median":
-        matrix = matrix.apply(lambda x: x.fillna(x.median()), axis=0)
-    elif missing_method == "Zero":
-        matrix = matrix.fillna(0)
-    elif missing_method == "Drop rows":
-        matrix = matrix.dropna(axis=0)
-
-    return matrix
-
-
-def add_common_layout_options(fig, title, height=650):
-    fig.update_layout(
-        title=title,
-        height=height,
-        template="plotly_white",
-        font=dict(size=13),
-        legend=dict(orientation="h", yanchor="bottom", y=-0.25)
-    )
-    return fig
+def format_number(value, decimals=4):
+    """
+    Format a number with specified decimal places.
+    
+    Args:
+        value: Number to format
+        decimals: Number of decimal places
+    
+    Returns:
+        str: Formatted number string
+    """
+    try:
+        return f"{value:.{decimals}f}"
+    except (TypeError, ValueError):
+        return str(value)
