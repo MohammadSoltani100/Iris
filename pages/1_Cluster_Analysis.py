@@ -15,9 +15,7 @@ from utils import (
     add_common_layout_options
 )
 
-st.set_page_config(page_title="Cluster Analysis", layout="wide")
-
-st.title("Cluster analysis")
+#st.title("Cluster analysis")
 st.write("Upload any numeric dataset and perform k-means or hierarchical clustering.")
 
 df = load_data_widget("cluster", "Upload clustering data")

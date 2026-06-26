@@ -11,9 +11,7 @@ from utils import (
     add_common_layout_options
 )
 
-st.set_page_config(page_title="Metabolic Pathway", layout="wide")
-
-st.title("Metabolic pathway network")
+#st.title("Metabolic pathway network")
 st.write("Upload an edge list. Required columns: source node and target node. Optional columns: enzyme, weight, activity.")
 
 edge_df = load_data_widget("pathway_edges", "Upload pathway edge list")

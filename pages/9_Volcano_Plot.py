@@ -11,9 +11,7 @@ from utils import (
     add_common_layout_options
 )
 
-st.set_page_config(page_title="Volcano Plot", layout="wide")
-
-st.title("Volcano plot")
+#st.title("Volcano plot")
 st.write("Upload differential expression results with gene ID, log2 fold change, and p-value or adjusted p-value.")
 
 df = load_data_widget("volcano", "Upload volcano plot data")

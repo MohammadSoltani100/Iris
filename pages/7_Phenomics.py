@@ -12,9 +12,7 @@ from utils import (
     add_common_layout_options
 )
 
-st.set_page_config(page_title="Phenomics", layout="wide")
-
-st.title("Phenomics analysis")
+#st.title("Phenomics analysis")
 st.write("Upload phenotype data. Rows should represent genotypes, plots, samples, or observations.")
 
 df = load_data_widget("phenomics", "Upload phenomics data")

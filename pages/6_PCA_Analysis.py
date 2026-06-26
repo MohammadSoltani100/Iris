@@ -14,9 +14,7 @@ from utils import (
     add_common_layout_options
 )
 
-st.set_page_config(page_title="PCA Analysis", layout="wide")
-
-st.title("PCA analysis")
+#st.title("PCA analysis")
 st.write("Upload a table where rows are samples and numeric columns are variables/features.")
 
 df = load_data_widget("pca", "Upload PCA input data")

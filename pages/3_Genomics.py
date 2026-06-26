@@ -11,9 +11,7 @@ from utils import (
     add_common_layout_options
 )
 
-st.set_page_config(page_title="Genomics", layout="wide")
-
-st.title("Genomics visualization")
+#st.title("Genomics visualization")
 st.write("Upload genomics results such as GWAS, marker statistics, gene annotations, or chromosome-position data.")
 
 df = load_data_widget("genomics", "Upload genomics data")

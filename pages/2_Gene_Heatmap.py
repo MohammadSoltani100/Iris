@@ -12,9 +12,7 @@ from utils import (
     add_common_layout_options
 )
 
-st.set_page_config(page_title="Gene Heatmap", layout="wide")
-
-st.title("Gene expression heatmap")
+#st.title("Gene expression heatmap")
 st.write("Upload a gene expression matrix. Recommended format: genes in rows and samples or conditions in columns.")
 
 df = load_data_widget("gene_heatmap", "Upload gene expression data")

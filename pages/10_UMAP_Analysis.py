@@ -5,8 +5,7 @@ import plotly.express as px
 from umap import UMAP
 from sklearn.preprocessing import StandardScaler
 
-st.set_page_config(page_title="UMAP Analysis", layout="wide")
-st.title("🗺️ UMAP Analysis")
+#st.title("🗺️ UMAP Analysis")
 st.markdown("---")
 
 # --- Sidebar settings ---

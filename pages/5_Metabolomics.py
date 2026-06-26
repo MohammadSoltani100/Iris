@@ -12,9 +12,7 @@ from utils import (
     add_common_layout_options
 )
 
-st.set_page_config(page_title="Metabolomics", layout="wide")
-
-st.title("Metabolomics analysis")
+#st.title("Metabolomics analysis")
 st.write("Upload metabolomics data in long format or wide format.")
 
 df = load_data_widget("metabolomics", "Upload metabolomics data")

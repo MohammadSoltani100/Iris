@@ -11,8 +11,7 @@ from sklearn.metrics import accuracy_score, r2_score
 import warnings
 warnings.filterwarnings('ignore')
 
-st.set_page_config(page_title="Feature Selection", layout="wide")
-st.title("🎯 Feature Selection")
+#st.title("🎯 Feature Selection")
 st.markdown("---")
 
 # --- Sidebar ---

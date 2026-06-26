@@ -15,9 +15,7 @@ from utils import (
     add_common_layout_options
 )
 
-st.set_page_config(page_title="SNP Analysis", layout="wide")
-
-st.title("SNP analysis")
+#st.title("SNP analysis")
 st.write("Upload SNP genotype matrix or GWAS results. Genotype matrix should preferably use dosage coding 0, 1, 2.")
 
 df = load_data_widget("snp", "Upload SNP data")
