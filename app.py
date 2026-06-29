@@ -1,9 +1,5 @@
 import streamlit as st
 
-# ─────────────────────────────────────────────
-# Page configuration - must be the FIRST
-# Streamlit command in the main app file
-# ─────────────────────────────────────────────
 st.set_page_config(
     page_title="Multi-Omics Analysis Platform",
     page_icon="🧬",
@@ -11,137 +7,88 @@ st.set_page_config(
     initial_sidebar_state="expanded",
 )
 
-# ─────────────────────────────────────────────
-# Custom CSS styling for the home page
-# ─────────────────────────────────────────────
+# --- Custom CSS ---
 st.markdown("""
 <style>
     .main-header {
-        font-size: 2.5rem;
-        font-weight: bold;
-        color: #1E88E5;
-        text-align: center;
-        margin-bottom: 0.5rem;
+        font-size: 2.5rem; font-weight: bold;
+        color: #1E88E5; text-align: center; margin-bottom: .5rem;
     }
     .sub-header {
-        font-size: 1.2rem;
-        color: #666666;
-        text-align: center;
-        margin-bottom: 2rem;
+        font-size: 1.2rem; color: #666;
+        text-align: center; margin-bottom: 2rem;
     }
-    .category-box {
-        background: #f8f9fa;
-        border-left: 4px solid #1E88E5;
-        padding: 1rem 1.5rem;
-        border-radius: 6px;
-        margin-bottom: 1rem;
+    .cat-box {
+        background: #f8f9fa; border-left: 4px solid #1E88E5;
+        padding: 1rem 1.5rem; border-radius: 6px; margin-bottom: 1rem;
     }
+    /* Hide the default "app" entry that duplicates Home */
+    [data-testid="stSidebarNav"] li:first-child { display: none; }
 </style>
 """, unsafe_allow_html=True)
 
-# ─────────────────────────────────────────────
-# Home page header
-# ─────────────────────────────────────────────
+st.markdown('<p class="main-header">🧬 Multi-Omics Analysis Platform</p>',
+            unsafe_allow_html=True)
 st.markdown(
-    '<p class="main-header">🧬 Multi-Omics Analysis Platform</p>',
-    unsafe_allow_html=True,
-)
-st.markdown(
-    '<p class="sub-header">A comprehensive platform for genomics, metabolomics,'
-    ' phenomics, and machine learning analysis</p>',
-    unsafe_allow_html=True,
-)
+    '<p class="sub-header">Comprehensive genomics, transcriptomics, proteomics, '
+    'metabolomics, phenomics &amp; machine-learning analysis</p>',
+    unsafe_allow_html=True)
 st.markdown("---")
 
-# ─────────────────────────────────────────────
-# Welcome section
-# ─────────────────────────────────────────────
 st.header("👋 Welcome")
 st.markdown("""
-This platform provides a wide range of **bioinformatics** and
-**machine learning** analysis tools.  
-Use the **sidebar** on the left to navigate between different analysis modules.
+Use the **sidebar** to navigate between analysis modules.  
+Each module accepts **CSV or Excel** files.  
+For Excel files you can **choose the sheet** to load.
 """)
 
-# ─────────────────────────────────────────────
-# Analysis module overview
-# ─────────────────────────────────────────────
-st.header("📂 Available Analysis Modules")
+st.header("📂 Available Modules")
+c1, c2, c3 = st.columns(3)
 
-col1, col2, col3 = st.columns(3)
-
-with col1:
-    st.markdown('<div class="category-box">', unsafe_allow_html=True)
-    st.markdown("### 🧬 Omics Analysis")
+with c1:
+    st.markdown('<div class="cat-box">', unsafe_allow_html=True)
+    st.markdown("### 🧬 Omics")
     st.markdown("""
-- **Genomics** — Genomic data analysis  
-- **Metabolomics** — Metabolomics analysis  
-- **Phenomics** — Phenomics analysis  
-- **Gene Heatmap** — Expression heatmap  
-- **Metabolic Pathway** — Pathway visualization  
-- **SNP Analysis** — SNP data analysis  
+- **Genomics** → GWAS · SNP · Phylogenetic
+- **Transcriptomics** → DE · Heatmap · Volcano
+- **Proteomics** → Protein quantification
+- **Metabolomics** → Metabolite profiling
+- **Phenomics** → Trait analysis
     """)
-    st.markdown('</div>', unsafe_allow_html=True)
+    st.markdown("</div>", unsafe_allow_html=True)
 
-with col2:
-    st.markdown('<div class="category-box">', unsafe_allow_html=True)
-    st.markdown("### 📊 Dimensionality Reduction")
+with c2:
+    st.markdown('<div class="cat-box">', unsafe_allow_html=True)
+    st.markdown("### 📊 Multivariate")
     st.markdown("""
-- **PCA Analysis** — Principal Component Analysis  
-- **UMAP Analysis** — Uniform Manifold Approximation  
-- **Cluster Analysis** — Clustering methods  
-- **Volcano Plot** — Differential expression  
+- **PCA Analysis**
+- **Cluster Analysis**
+- **UMAP Analysis**
     """)
-    st.markdown('</div>', unsafe_allow_html=True)
+    st.markdown("</div>", unsafe_allow_html=True)
 
-with col3:
-    st.markdown('<div class="category-box">', unsafe_allow_html=True)
+with c3:
+    st.markdown('<div class="cat-box">', unsafe_allow_html=True)
     st.markdown("### 🤖 Machine Learning")
     st.markdown("""
-- **Regression** — Linear, Polynomial, RF, XGBoost  
-- **Classification** — Logistic, SVM, RF, XGBoost  
-- **Feature Selection** — Forward, Backward, Lasso, Ridge  
+- **Regression** — Linear · Poly · RF · XGB
+- **Classification** — Logistic · SVM · RF · XGB
+- **Feature Selection** — Forward · Backward · Lasso · Ridge
     """)
-    st.markdown('</div>', unsafe_allow_html=True)
+    st.markdown("</div>", unsafe_allow_html=True)
 
 st.markdown("---")
-
-# ─────────────────────────────────────────────
-# Quick start guide
-# ─────────────────────────────────────────────
-st.header("🚀 Quick Start Guide")
+st.header("🚀 Quick Start")
 st.markdown("""
-1. **Select an analysis** from the sidebar navigation  
-2. **Upload your CSV data** file  
-3. **Configure parameters** in the sidebar  
-4. **Click Run** to execute the analysis  
-5. **Download results** and visualizations  
+1. Pick a module from the sidebar  
+2. Upload CSV / Excel (choose sheet if Excel)  
+3. Configure parameters  
+4. Click **Run**  
+5. Download results
 """)
 
-# ─────────────────────────────────────────────
-# Expected data format
-# ─────────────────────────────────────────────
-st.header("📋 Expected Data Format")
-st.markdown("""
-All analyses accept **CSV files** with the following general structure:
-
-| Sample | Feature_1 | Feature_2 | Feature_3 | Group |
-|--------|-----------|-----------|-----------|-------|
-| S1     | 5.1       | 3.5       | 1.4       | A     |
-| S2     | 4.9       | 3.0       | 1.4       | B     |
-| S3     | 7.0       | 3.2       | 4.7       | A     |
-
-- **Rows** → Samples / Observations  
-- **Columns** → Features / Variables  
-- **Group / Label column** → optional, used for coloring and classification  
-""")
-
-# ─────────────────────────────────────────────
-# Footer
-# ─────────────────────────────────────────────
 st.markdown("---")
-st.markdown("""
-<div style='text-align:center; color:#888; padding:1rem;'>
-    🧬 Multi-Omics Analysis Platform | Built with Streamlit
-</div>
-""", unsafe_allow_html=True)
+st.markdown(
+    '<div style="text-align:center;color:#888;padding:1rem;">'
+    '🧬 Multi-Omics Analysis Platform | Built with Streamlit</div>',
+    unsafe_allow_html=True)

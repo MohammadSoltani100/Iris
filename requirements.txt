@@ -41,3 +41,4 @@ xgboost>=1.7.0
 openpyxl>=3.0.10
 biopython>=1.79
 networkx>=3.0
+statsmodels>=0.13.0
